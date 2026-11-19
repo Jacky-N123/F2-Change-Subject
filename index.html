@@ -3692,18 +3692,24 @@
     }
 
     function formatDisplayHtmlFromPlain(rawStr) {
-      let s = String(rawStr || "").trim()
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/²/g, "^2")
-        .replace(/³/g, "^3")
-        .replace(/⁴/g, "^4")
-        .replace(/\^([0-9]+)/g, "<sup>$1</sup>")
-        .replace(/-/g, "−")
-        .replace(/\*/g, "×")
-        .replace(/([a-zA-Z])/g, "<i>$1</i>");
-      return s;
+      const superMap = {
+        "⁰": "^0", "¹": "^1", "²": "^2", "³": "^3", "⁴": "^4",
+        "⁵": "^5", "⁶": "^6", "⁷": "^7", "⁸": "^8", "⁹": "^9"
+      };
+      const normalized = String(rawStr || "").trim()
+        .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ch => superMap[ch] || ch);
+      return normalized.replace(/([&<>])|\^([0-9]+)|([a-zA-Z])|(-)|(\*)/g, (match, htmlCh, expDigits, letter, minus, mult) => {
+        if (htmlCh) {
+          if (htmlCh === "&") return "&amp;";
+          if (htmlCh === "<") return "&lt;";
+          if (htmlCh === ">") return "&gt;";
+        }
+        if (expDigits) return `<sup>${expDigits}</sup>`;
+        if (letter) return `<i>${letter}</i>`;
+        if (minus) return "−";
+        if (mult) return "×";
+        return match;
+      });
     }
 
     function formatStepModelToDisplayHtml(stepObj) {
